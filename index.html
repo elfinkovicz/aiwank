@@ -185,10 +185,6 @@
 
 
 
-
-
-
-
 async function sendMessage() {
     const userInput = document.getElementById('userInput').value;
     const chatOutput = document.getElementById('chatOutput');
@@ -204,28 +200,36 @@ async function sendMessage() {
         // Eingabefeld leeren
         document.getElementById('userInput').value = "";
 
-        const lambdaRequest = {
-            httpMethod: 'POST',
+        // Lambda-Anfrage vorbereiten (mit der richtigen Struktur)
+        const lambdaRequestBody = {
+    
+
+
+            httpMethod: "POST",  // HTTP-Methode
             headers: {
-                'Content-Type': 'application/json',
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+                "Access-Control-Allow-Headers": "Content-Type"
+                "Content-Type": "application/json"  // Header mit Content-Type
             },
             body: JSON.stringify({
                 content: userInput  // Benutzer-Nachricht als Body
-            }),
-            isBase64Encoded: false
+            }), 
+            isBase64Encoded: false  // Kennzeichnung, ob der Body Base64-codiert ist
         };
 
+
         // Debugging-Ausgabe: Zeige die Anfrage-Rohdaten
-        debugOutput.textContent = `Sende Anfrage an Lambda:\n${JSON.stringify(lambdaRequest, null, 2)}\n\n`;
+        debugOutput.textContent = `Sende Anfrage an Lambda:\n${JSON.stringify(lambdaRequestBody, null, 2)}\n\n`;
 
         try {
-            // Anfrage an die Lambda-Funktion
+            // Anfrage an die Lambda-Funktion senden
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(lambdaRequest) // Anfrage an Lambda
+                body: JSON.stringify(lambdaRequestBody) // Body als JSON
             });
 
             // Debugging: Antwort-Text ausgeben, bevor wir versuchen, ihn zu parsen
@@ -238,21 +242,21 @@ async function sendMessage() {
 
                 // Debugging-Ausgabe: Zeige die Antwort-Rohdaten als JSON
                 debugOutput.textContent += `Antwort von Lambda (JSON):\n${JSON.stringify(data, null, 2)}\n\n`;
-
                 if (response.ok) {
-                    const responseBody = JSON.parse(data.body); // Antwort weiter verarbeiten
+                const responseBody = data.body ? JSON.parse(data.body) : data; // Antwort weiter verarbeiten
 
-                    console.log('Antwort von Lambda:', responseBody);
-                    const botMessage = document.createElement('p');
-                    botMessage.textContent = "KI: " + responseBody.response; // KI-Antwort anzeigen
-                    chatOutput.appendChild(botMessage);
-                } else {
-                    const errorText = data.body || 'Unbekannter Fehler';
-                    console.error('Fehler:', errorText);
-                    const errorMessage = document.createElement('p');
-                    errorMessage.textContent = "KI: Fehler: " + errorText;
-                    chatOutput.appendChild(errorMessage);
-                }
+                console.log('Antwort von Lambda:', responseBody);
+                const botMessage = document.createElement('p');
+                botMessage.textContent = "KI: " + responseBody.response; // KI-Antwort anzeigen
+                chatOutput.appendChild(botMessage);
+            } else {
+                const errorText = data.body || 'Unbekannter Fehler';
+                console.error('Fehler:', errorText);
+                const errorMessage = document.createElement('p');
+                errorMessage.textContent = "KI: Fehler: " + errorText;
+                chatOutput.appendChild(errorMessage);
+            }
+
             } catch (e) {
                 console.error('Fehler beim Parsen der Antwort:', e);
                 const errorMessage = document.createElement('p');
@@ -277,8 +281,6 @@ function checkEnter(event) {
         sendMessage();
     }
 }
-
-
 
 
 
