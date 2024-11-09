@@ -178,6 +178,7 @@
 
 
 
+<script>
 
 
 
@@ -185,11 +186,6 @@
 
 
 
-
-
-        <script>
-
-       
 
 
 
@@ -232,25 +228,35 @@ async function sendMessage() {
                 body: JSON.stringify(lambdaRequest) // Anfrage an Lambda
             });
 
-            // Antwort als JSON parsen und Debugging-Ausgabe
-            const data = await response.json();
+            // Debugging: Antwort-Text ausgeben, bevor wir versuchen, ihn zu parsen
+            const responseText = await response.text();
+            debugOutput.textContent += `Antwort von Lambda (Raw Text):\n${responseText}\n\n`;
 
-            // Debugging-Ausgabe: Zeige die Antwort-Rohdaten
-            debugOutput.textContent += `Antwort von Lambda (JSON):\n${JSON.stringify(data, null, 2)}\n\n`;
+            // Versuche die Antwort zu parsen, wenn sie gültiges JSON ist
+            try {
+                const data = JSON.parse(responseText);
 
-            // Antwort verarbeiten
-            if (response.ok) {
-                const responseBody = JSON.parse(data.body);
+                // Debugging-Ausgabe: Zeige die Antwort-Rohdaten als JSON
+                debugOutput.textContent += `Antwort von Lambda (JSON):\n${JSON.stringify(data, null, 2)}\n\n`;
 
-                console.log('Antwort von Lambda:', responseBody);
-                const botMessage = document.createElement('p');
-                botMessage.textContent = "KI: " + responseBody.response; // KI-Antwort anzeigen
-                chatOutput.appendChild(botMessage);
-            } else {
-                const errorText = data.body || 'Unbekannter Fehler';
-                console.error('Fehler:', errorText);
+                if (response.ok) {
+                    const responseBody = JSON.parse(data.body); // Antwort weiter verarbeiten
+
+                    console.log('Antwort von Lambda:', responseBody);
+                    const botMessage = document.createElement('p');
+                    botMessage.textContent = "KI: " + responseBody.response; // KI-Antwort anzeigen
+                    chatOutput.appendChild(botMessage);
+                } else {
+                    const errorText = data.body || 'Unbekannter Fehler';
+                    console.error('Fehler:', errorText);
+                    const errorMessage = document.createElement('p');
+                    errorMessage.textContent = "KI: Fehler: " + errorText;
+                    chatOutput.appendChild(errorMessage);
+                }
+            } catch (e) {
+                console.error('Fehler beim Parsen der Antwort:', e);
                 const errorMessage = document.createElement('p');
-                errorMessage.textContent = "KI: Fehler: " + errorText;
+                errorMessage.textContent = "KI: Fehler beim Parsen der Antwort: " + e.message;
                 chatOutput.appendChild(errorMessage);
             }
         } catch (error) {
@@ -271,6 +277,7 @@ function checkEnter(event) {
         sendMessage();
     }
 }
+
 
 
 
