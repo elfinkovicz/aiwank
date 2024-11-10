@@ -122,63 +122,56 @@
             font-weight: bold;
             color: #4A90E2;
         }
-
-
-
-
-
-
-
-
-
-
-
-
     </style>
 </head>
 <body>
 
-    <!-- Header mit Logo und Titel -->
     <header>
         <h1>AI.Wank - Aina</h1>
+
+        <!-- Lautstärkeregler -->
+        <div>
+            <label for="volumeControl">Lautstärke:</label>
+            <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1">
+        </div>
+
+        <audio id="audioPlayer" controls></audio>
+
     </header>
 
     <main>
-        <!-- Hero-Bereich mit Bild und Beschreibung -->
         <section class="hero-section">
             <img src="https://s3.eu-central-1.amazonaws.com/ai.wank/Website/blondine.jpg" alt="Chatbox Bild">
             <h2>Willkommen bei deiner intelligenten KI Freundin</h2>
             <p>Erlebe meine warmherzige Stimme, die dir hilft, dich zu entspannen. ... Sag mir einfach, was ich tun soll...</p>
         </section>
 
-     <!-- Chatbox-Bereich -->
-<section class="chatbox-container">
-        <div class="chatbox">
-            <div class="chat-output" id="chatOutput"></div>
-            <div class="chat-input-container">
-                <input type="text" id="userInput" placeholder="Geben Sie Ihre Nachricht ein..." onkeydown="checkEnter(event)">
-                <button onclick="sendMessage()">Senden</button>
+        <section class="chatbox-container">
+            <div class="chatbox">
+                <div class="chat-output" id="chatOutput"></div>
+                <div class="chat-input-container">
+                    <input type="text" id="userInput" placeholder="Geben Sie Ihre Nachricht ein..." onkeydown="checkEnter(event)">
+                    <button onclick="sendMessage()">Senden</button>
+                </div>
             </div>
-        </div>
 
-        <!-- Debugging-Box -->
-        <div class="debug-box" id="debugBox">
-            <h3>Debugging-Informationen</h3>
-            <pre id="debugOutput"></pre>
-        </div>
-
-
-
-</section>
-
-
-    
-
-
-
-
+            <div class="debug-box" id="debugBox">
+                <h3>Debugging-Informationen</h3>
+                <pre id="debugOutput"></pre>
+            </div>
+        </section>
 
 <script>
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -188,85 +181,96 @@
 async function sendMessage() {
     const userInput = document.getElementById('userInput').value;
     const chatOutput = document.getElementById('chatOutput');
-    const debugOutput = document.getElementById('debugOutput');
-    const apiUrl = 'https://5tq6qv3twelputxrmyixbefbi40wrfkj.lambda-url.eu-central-1.on.aws/';
+    const apiUrl = 'https://openrouter.ai/api/v1/chat/completions'; // OpenRouter API URL
+    const elevenLabsApiUrl = 'https://api.elevenlabs.io/v1/text-to-speech/redNyaEMtdUP15FpCRI8';  // Eleven Labs API URL
 
     if (userInput.trim() !== "") {
         // Benutzer-Nachricht sofort anzeigen
         const userMessage = document.createElement('p');
-        userMessage.textContent = "Du: " + userInput; // Zeige die Nachricht des Benutzers an
+        userMessage.textContent = "Du: " + userInput;
         chatOutput.appendChild(userMessage);
 
         // Eingabefeld leeren
         document.getElementById('userInput').value = "";
 
-        // Lambda-Anfrage vorbereiten (mit der richtigen Struktur)
-        const lambdaRequestBody = {
-    
-
-
-            httpMethod: "POST",  // HTTP-Methode
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
-                "Access-Control-Allow-Headers": "Content-Type"
-                "Content-Type": "application/json"  // Header mit Content-Type
-            },
-            body: JSON.stringify({
-                content: userInput  // Benutzer-Nachricht als Body
-            }), 
-            isBase64Encoded: false  // Kennzeichnung, ob der Body Base64-codiert ist
-        };
-
-
-        // Debugging-Ausgabe: Zeige die Anfrage-Rohdaten
-        debugOutput.textContent = `Sende Anfrage an Lambda:\n${JSON.stringify(lambdaRequestBody, null, 2)}\n\n`;
-
         try {
-            // Anfrage an die Lambda-Funktion senden
+            // API-Anfrage an OpenRouter senden      KI TEXT
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer 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` // API Key direkt im Header
                 },
-                body: JSON.stringify(lambdaRequestBody) // Body als JSON
+                body: JSON.stringify({
+                    "model": "openai/gpt-3.5-turbo",
+                    "messages": [{"role": "user", "content": userInput}]
+                })
             });
 
-            // Debugging: Antwort-Text ausgeben, bevor wir versuchen, ihn zu parsen
-            const responseText = await response.text();
-            debugOutput.textContent += `Antwort von Lambda (Raw Text):\n${responseText}\n\n`;
+            // Antwort als JSON parsen
+            const data = await response.json();  // Antwort als JSON parsen
+            const completionText = data.choices[0].message.content;  // Antwort extrahieren
 
-            // Versuche die Antwort zu parsen, wenn sie gültiges JSON ist
-            try {
-                const data = JSON.parse(responseText);
+            // Eleven Labs API Anfrage senden        KI STIMME
+            const audioResponse = await fetch(elevenLabsApiUrl, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    "xi-api-key": 'sk_ebf7e36de399664e7f7ba3143558c1bff94133d3863e300d'  // API Key für Eleven Labs
+                },
+                body: JSON.stringify({
+                    "text": completionText,
+                    "voice": "redNyaEMtdUP15FpCRI8", // Stimme wählen
+                    "model_id": "eleven_multilingual_v2",  // Modell-ID
+                    "voice_settings": {
+                        "stability": 0.0,
+                        "similarity_boost": 1.0,
+                        "style": 0.0,
+                        "use_speaker_boost": true
+                    }
+                })
+            });
 
-                // Debugging-Ausgabe: Zeige die Antwort-Rohdaten als JSON
-                debugOutput.textContent += `Antwort von Lambda (JSON):\n${JSON.stringify(data, null, 2)}\n\n`;
-                if (response.ok) {
-                const responseBody = data.body ? JSON.parse(data.body) : data; // Antwort weiter verarbeiten
 
-                console.log('Antwort von Lambda:', responseBody);
-                const botMessage = document.createElement('p');
-                botMessage.textContent = "KI: " + responseBody.response; // KI-Antwort anzeigen
-                chatOutput.appendChild(botMessage);
-            } else {
-                const errorText = data.body || 'Unbekannter Fehler';
-                console.error('Fehler:', errorText);
+        
+
+
+            if (!audioResponse.ok) {
+                // Fehlerbehandlung: Wenn die Antwort von Eleven Labs nicht OK ist
+                const errorData = await audioResponse.json();
+                console.error('Fehler bei der Audio-Konvertierung:', errorData);
                 const errorMessage = document.createElement('p');
-                errorMessage.textContent = "KI: Fehler: " + errorText;
+                errorMessage.textContent = "KI: Fehler bei der Audio-Konvertierung: " + (errorData.error || "Unbekannter Fehler");
                 chatOutput.appendChild(errorMessage);
+                return;
             }
 
-            } catch (e) {
-                console.error('Fehler beim Parsen der Antwort:', e);
-                const errorMessage = document.createElement('p');
-                errorMessage.textContent = "KI: Fehler beim Parsen der Antwort: " + e.message;
-                chatOutput.appendChild(errorMessage);
-            }
+            const audioData = await audioResponse.blob();
+            const audioUrl = URL.createObjectURL(audioData);
+
+            // Audio abspielen
+            const audioPlayer = document.getElementById('audioPlayer');
+            audioPlayer.src = audioUrl;
+            audioPlayer.play();
+
+            // Lautstärkeregler anwenden
+            document.getElementById('volumeControl').addEventListener('input', function() {
+                audioPlayer.volume = this.value;
+            });
+
+            // Debugging-Ausgabe
+            const debugOutput = document.getElementById('debugOutput');
+            debugOutput.textContent = "Rohdaten der Antwort: " + JSON.stringify(data, null, 2);
+
+            // Antwort im Chat-Fenster anzeigen
+            const botMessage = document.createElement('p');
+            botMessage.textContent = "KI: " + (completionText || "Antwort nicht gefunden");
+            chatOutput.appendChild(botMessage);
+
         } catch (error) {
-            console.error('Fehler:', error);
+            console.error('Fehler bei der Anfrage oder beim Parsen:', error);
             const errorMessage = document.createElement('p');
-            errorMessage.textContent = "KI: Error: " + error.message;
+            errorMessage.textContent = "KI: Fehler: " + error.message;
             chatOutput.appendChild(errorMessage);
         }
 
@@ -274,14 +278,16 @@ async function sendMessage() {
         chatOutput.scrollTop = chatOutput.scrollHeight;
     }
 }
-
 // Funktion, um Nachricht beim Drücken der Enter-Taste zu senden
 function checkEnter(event) {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !event.shiftKey) { // Nur bei Enter, nicht bei Shift+Enter
+        event.preventDefault();  // Verhindert das Standardverhalten (Zeilenumbruch)
         sendMessage();
     }
 }
 
+// Event-Listener hinzufügen
+document.getElementById('userInput').addEventListener('keydown', checkEnter);
 
 
 
@@ -291,14 +297,23 @@ function checkEnter(event) {
 
 
 
-        </script>
+
+
+
+
+
+
+
+
+
+</script>
 
     </main>
 
-    <!-- Footer -->
     <footer>
         &copy; 2024 ai.wank. Alle Rechte vorbehalten.
     </footer>
     
 </body>
+
 </html>
