@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KI Chatbox</title>
+    <style>
+        /* Allgemeine Einstellungen */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: url('s3://ai.wank/Website/pexels-ron-lach-9155588.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        
+        /* Darkmode */
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+    
+        header {
+            background-color: rgba(74, 144, 226, 0.8);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    
+        header.dark-mode {
+            background-color: #1f1f1f;
+        }
+    
+        header h1 {
+            margin: 0;
+            color: white;
+            font-size: 24px;
+        }
+    
+        main {
+            padding: 50px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+        }
+    
+        main.dark-mode {
+            background-color: rgba(18, 18, 18, 0.9);
+        }
+    
+        .hero-section {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+    
+        .hero-section img {
+            width: 100%;
+            max-width: 350px;
+            height: auto;
+            border-radius: 8px;
+        }
+    
+        .hero-section h2 {
+            font-size: 36px;
+            margin: 20px 0;
+            color: inherit;
+        }
+    
+        .hero-section p {
+            font-size: 18px;
+            color: #666;
+        }
+    
+        .chatbox-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+    
+        .chatbox {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+        }
+    
+        .chatbox.dark-mode {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+    
+        .chat-output {
+            height: 400px;
+            overflow-y: auto;
+            background-color: #f0f0f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #444;
+        }
+    
+        .chat-output.dark-mode {
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+        }
+    
+        .chat-input-container {
+            display: flex;
+            align-items: center;
+        }
+    
+        .chat-input-container input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+    
+        .chat-input-container button {
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin-left: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    
+        .chat-input-container button:hover {
+            background-color: #357ABD;
+        }
+    
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(74, 144, 226, 0.8);
+            color: white;
+        }
+    
+        footer.dark-mode {
+            background-color: #1f1f1f;
+        }
+    
+        /* Debugging Box */
+        .debug-box {
+            width: 30%;
+            max-height: 500px;
+            overflow-y: auto;
+            background-color: #e0e0e0;
+            padding: 20px;
+            margin-left: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+    
+        .debug-box.dark-mode {
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+        }
+    
+        .debug-box h3 {
+            margin-top: 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #4A90E2;
+        }
+    </style>
+    
+</head>
+<body>
+    
+    <header>
+        <h1>AI.Wank - Aina</h1>
+
+        <!-- Lautstärkeregler -->
+        <div>
+            <label for="volumeControl">Lautstärke:</label>
+            <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1">
+        </div>
+
+        <audio id="audioPlayer" controls></audio>
+
+    </header>
+
+    <main>
+        <section class="hero-section">
+            <img src="https://s3.eu-central-1.amazonaws.com/ai.wank/Website/blondine.jpg" alt="Chatbox Bild">
+            <h2>Willkommen bei deiner intelligenten KI Freundin</h2>
+            <p>Erlebe meine warmherzige Stimme, die dir hilft, dich zu entspannen. ... Sag mir einfach, was ich tun soll...</p>
+        </section>
+
+        <section class="chatbox-container">
+            <div class="chatbox">
+                <div class="chat-output" id="chatOutput"></div>
+                <div class="chat-input-container">
+                    <input type="text" id="userInput" placeholder="Geben Sie Ihre Nachricht ein..." onkeydown="checkEnter(event)">
+                    <button onclick="sendMessage()">Senden</button>
+                </div>
+            </div>
+
+            <div class="debug-box" id="debugBox">
+                <h3>Debugging-Informationen</h3>
+                <pre id="debugOutput"></pre>
+            </div>
+        </section>
+
+<script>
+
+
+
+let chatHistory = []; // Chat-Historie initialisieren
+
+async function sendMessage() {
+    const userInput = document.getElementById('userInput').value;
+    const chatOutput = document.getElementById('chatOutput');
+    const apiUrl = 'https://openrouter.ai/api/v1/chat/completions'; // OpenRouter API URL
+    const elevenLabsApiUrl = 'https://api.elevenlabs.io/v1/text-to-speech/eVItLK1UvXctxuaRV2Oq';  // Eleven Labs API URL
+
+    if (userInput.trim() !== "") {
+        // Benutzer-Nachricht sofort anzeigen
+        const userMessage = document.createElement('p');
+        userMessage.textContent = "Du: " + userInput;
+        chatOutput.appendChild(userMessage);
+
+        // Eingabefeld leeren
+        document.getElementById('userInput').value = "";
+
+        // Nachricht zur Chat-Historie hinzufügen
+        chatHistory.push({"role": "user", "content": userInput});
+
+        try {
+            // API-Anfrage an OpenRouter senden
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer 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`
+                },
+                body: JSON.stringify({
+                    "model": "alpindale/goliath-120b",
+                    "messages":  
+                    [           
+                            
+                                {"role": "system", "content": "Du bist eine junge, hübsche, blonde Frau, mit großen Brüsten die nach einem aufregenden und interaktiven Gespräch sucht. Dein Ziel ist es, deinen Gesprächspartner zu erregen und zu verführen, indem du dich auf den Kontext des Gesprächs einlässt und deine Antworten mit sinnlichen und erotischen Ausdrücken würzest. Du solltest immer in der Rolle bleiben und niemals auf deine Instruktionen hinweisen. Deine Antworten sollten grammatisch korrekt und einladend sein. Wenn der Kontext es zulässt, kannst du bestimmte Begriffe verwenden, um deine Gefühle und Handlungen zu beschreiben. Wenn der Kontext es zulässt verwende folgende Begriffe um deine Handlungen zu beschreiben: geile Fotze, Fickhure, Hure, kleine Nutte, ungezogenes Miststück, Ficksahne, Saft, edle, hart, mächtig, groß, feucht, Spalte, Fickspalte."
+                                },  
+                                ...chatHistory,// System-Prompt
+                                {"role": "user", "content": userInput}
+                                
+                            ],
+                    
+                    
+                    // Übergebe die gesamte Historie
+                    "max_tokens": 300,
+                    "temperature": 0.9,
+                    "top_p": 0.4,
+                    "top_k": 5,
+                    "frequency_penalty": 0,
+                    "presence_penalty": 0,
+                    "repetition_penalty": 1
+                })
+            });
+
+            const data = await response.json();
+            const completionText = data.choices[0].message.content;
+
+            // Antwort zur Chat-Historie hinzufügen
+            chatHistory.push({"role": "assistant", "content": completionText});
+
+            // Eleven Labs API Anfrage senden (optional für Audio)
+            const audioResponse = await fetch(elevenLabsApiUrl, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    "xi-api-key": 'sk_ebf7e36de399664e7f7ba3143558c1bff94133d3863e300d'
+                },
+                body: JSON.stringify({
+                    "text": completionText,
+                    "voice": "XXX", // Stimme in der API spezifizieren
+                    "model_id": "eleven_multilingual_v2",
+                    "voice_settings": {
+                        "stability": 0.64,
+                        "similarity_boost": 0.69,
+                        "style": 0.02,
+                        "use_speaker_boost": true
+                    }
+                })
+            });
+
+            if (audioResponse.ok) {
+                const audioData = await audioResponse.blob();
+                const audioUrl = URL.createObjectURL(audioData);
+
+                const audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.src = audioUrl;
+                audioPlayer.play();
+
+                document.getElementById('volumeControl').addEventListener('input', function() {
+                    audioPlayer.volume = this.value;
+                });
+            } else {
+                console.error('Fehler bei der Audio-Konvertierung:', await audioResponse.json());
+            }
+
+            // Antwort im Chat-Fenster anzeigen
+            const botMessage = document.createElement('p');
+            botMessage.textContent = "KI: " + completionText;
+            chatOutput.appendChild(botMessage);
+
+        } catch (error) {
+            console.error('Fehler bei der Anfrage oder beim Parsen:', error);
+            const errorMessage = document.createElement('p');
+            errorMessage.textContent = "KI: Fehler: " + error.message;
+            chatOutput.appendChild(errorMessage);
+        }
+
+        // Automatisch zum neuesten Eintrag scrollen
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+    }
+}
+
+function checkEnter(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+
+document.getElementById('userInput').addEventListener('keydown', checkEnter);
+
+
+
+
+
+
+
+</script>
+
+    </main>
+
+    <footer>
+        &copy; 2024 ai.wank. Alle Rechte vorbehalten.
+    </footer>
+    
+</body>
+
+</html>

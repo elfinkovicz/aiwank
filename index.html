@@ -4,316 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KI Chatbox</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-        }
-        header {
-            background-color: #4A90E2;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        header h1 {
-            margin: 0;
-            color: white;
-            font-size: 24px;
-        }
-        main {
-            padding: 50px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .hero-section {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-        .hero-section img {
-            width: 100%;
-            max-width: 350px;
-            height: auto;
-        }
-        .hero-section h2 {
-            font-size: 36px;
-            margin: 20px 0;
-            color: #333;
-        }
-        .hero-section p {
-            font-size: 18px;
-            color: #666;
-        }
-        .chatbox-container {
-            display: flex;
-            justify-content: center;
-            margin: 30px 0;
-        }
-        .chatbox {
-            width: 100%;
-            max-width: 600px;
-            background-color: white;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            padding: 20px;
-        }
-        .chat-output {
-            height: 400px;
-            overflow-y: auto;
-            background-color: #f0f0f5;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            font-size: 16px;
-            color: #444;
-        }
-        .chat-input-container {
-            display: flex;
-            align-items: center;
-        }
-        .chat-input-container input {
-            width: 100%;
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-        .chat-input-container button {
-            background-color: #4A90E2;
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            border-radius: 5px;
-            margin-left: 10px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .chat-input-container button:hover {
-            background-color: #357ABD;
-        }
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #4A90E2;
-            color: white;
-        }
-
-        /* Debugging Box */
-        .debug-box {
-            width: 30%;
-            max-height: 500px;
-            overflow-y: auto;
-            background-color: #e0e0e0;
-            padding: 20px;
-            margin-left: 20px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 14px;
-            color: #333;
-            border: 1px solid #ccc;
-        }
-
-        .debug-box h3 {
-            margin-top: 0;
-            font-size: 18px;
-            font-weight: bold;
-            color: #4A90E2;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <header>
-        <h1>AI.Wank - Aina</h1>
-
-        <!-- Lautstärkeregler -->
+        <h1>AI.Wank</h1>
         <div>
             <label for="volumeControl">Lautstärke:</label>
             <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1">
         </div>
-
-        <audio id="audioPlayer" controls></audio>
-
+        <audio id="audioPlayer" controls aria-label="Audio-Player"></audio>
     </header>
-
     <main>
         <section class="hero-section">
-            <img src="https://s3.eu-central-1.amazonaws.com/ai.wank/Website/blondine.jpg" alt="Chatbox Bild">
-            <h2>Willkommen bei deiner intelligenten KI Freundin</h2>
-            <p>Erlebe meine warmherzige Stimme, die dir hilft, dich zu entspannen. ... Sag mir einfach, was ich tun soll...</p>
+            <img src="https://s3.eu-central-1.amazonaws.com/ai.wank/Website/blondine.jpg" alt="Porträt einer KI-Chatbox-Figur">
+            <h3>Willkommen bei Alina. Alina ist hier um dir eine gute Zeit zu bereiten. Sie ist neugierig und leidenschaftlich. Stell dich doch kurz vor und mache ihr ein Kompliment</h3>
+            <p>Erlebe ihre warmherzige Stimme, die dir hilft, dich zu entspannen. Sag ihr einfach, was Sie tun soll.</p>
         </section>
-
         <section class="chatbox-container">
             <div class="chatbox">
-                <div class="chat-output" id="chatOutput"></div>
+                <div class="chat-output" id="chatOutput" aria-live="polite"></div>
                 <div class="chat-input-container">
-                    <input type="text" id="userInput" placeholder="Geben Sie Ihre Nachricht ein..." onkeydown="checkEnter(event)">
-                    <button onclick="sendMessage()">Senden</button>
+                    <input type="text" id="userInput" placeholder="Geben Sie Ihre Nachricht ein..." onkeydown="checkEnter(event)" aria-label="Nachricht eingeben">
+                    <button onclick="sendMessage()" aria-label="Nachricht senden">Senden</button>
                 </div>
             </div>
-
-            <div class="debug-box" id="debugBox">
+            <div class="debug-box" id="debugBox" aria-live="polite">
                 <h3>Debugging-Informationen</h3>
                 <pre id="debugOutput"></pre>
             </div>
         </section>
-
-<script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-async function sendMessage() {
-    const userInput = document.getElementById('userInput').value;
-    const chatOutput = document.getElementById('chatOutput');
-    const apiUrl = 'https://openrouter.ai/api/v1/chat/completions'; // OpenRouter API URL
-    const elevenLabsApiUrl = 'https://api.elevenlabs.io/v1/text-to-speech/redNyaEMtdUP15FpCRI8';  // Eleven Labs API URL
-
-    if (userInput.trim() !== "") {
-        // Benutzer-Nachricht sofort anzeigen
-        const userMessage = document.createElement('p');
-        userMessage.textContent = "Du: " + userInput;
-        chatOutput.appendChild(userMessage);
-
-        // Eingabefeld leeren
-        document.getElementById('userInput').value = "";
-
-        try {
-            // API-Anfrage an OpenRouter senden      KI TEXT
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer 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` // API Key direkt im Header
-                },
-                body: JSON.stringify({
-                    "model": "openai/gpt-3.5-turbo",
-                    "messages": [{"role": "user", "content": userInput}]
-                })
-            });
-
-            // Antwort als JSON parsen
-            const data = await response.json();  // Antwort als JSON parsen
-            const completionText = data.choices[0].message.content;  // Antwort extrahieren
-
-            // Eleven Labs API Anfrage senden        KI STIMME
-            const audioResponse = await fetch(elevenLabsApiUrl, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json",
-                    "xi-api-key": 'sk_ebf7e36de399664e7f7ba3143558c1bff94133d3863e300d'  // API Key für Eleven Labs
-                },
-                body: JSON.stringify({
-                    "text": completionText,
-                    "voice": "redNyaEMtdUP15FpCRI8", // Stimme wählen
-                    "model_id": "eleven_multilingual_v2",  // Modell-ID
-                    "voice_settings": {
-                        "stability": 0.0,
-                        "similarity_boost": 1.0,
-                        "style": 0.0,
-                        "use_speaker_boost": true
-                    }
-                })
-            });
-
-
-        
-
-
-            if (!audioResponse.ok) {
-                // Fehlerbehandlung: Wenn die Antwort von Eleven Labs nicht OK ist
-                const errorData = await audioResponse.json();
-                console.error('Fehler bei der Audio-Konvertierung:', errorData);
-                const errorMessage = document.createElement('p');
-                errorMessage.textContent = "KI: Fehler bei der Audio-Konvertierung: " + (errorData.error || "Unbekannter Fehler");
-                chatOutput.appendChild(errorMessage);
-                return;
-            }
-
-            const audioData = await audioResponse.blob();
-            const audioUrl = URL.createObjectURL(audioData);
-
-            // Audio abspielen
-            const audioPlayer = document.getElementById('audioPlayer');
-            audioPlayer.src = audioUrl;
-            audioPlayer.play();
-
-            // Lautstärkeregler anwenden
-            document.getElementById('volumeControl').addEventListener('input', function() {
-                audioPlayer.volume = this.value;
-            });
-
-            // Debugging-Ausgabe
-            const debugOutput = document.getElementById('debugOutput');
-            debugOutput.textContent = "Rohdaten der Antwort: " + JSON.stringify(data, null, 2);
-
-            // Antwort im Chat-Fenster anzeigen
-            const botMessage = document.createElement('p');
-            botMessage.textContent = "KI: " + (completionText || "Antwort nicht gefunden");
-            chatOutput.appendChild(botMessage);
-
-        } catch (error) {
-            console.error('Fehler bei der Anfrage oder beim Parsen:', error);
-            const errorMessage = document.createElement('p');
-            errorMessage.textContent = "KI: Fehler: " + error.message;
-            chatOutput.appendChild(errorMessage);
-        }
-
-        // Automatisch zum neuesten Eintrag scrollen
-        chatOutput.scrollTop = chatOutput.scrollHeight;
-    }
-}
-// Funktion, um Nachricht beim Drücken der Enter-Taste zu senden
-function checkEnter(event) {
-    if (event.key === 'Enter' && !event.shiftKey) { // Nur bei Enter, nicht bei Shift+Enter
-        event.preventDefault();  // Verhindert das Standardverhalten (Zeilenumbruch)
-        sendMessage();
-    }
-}
-
-// Event-Listener hinzufügen
-document.getElementById('userInput').addEventListener('keydown', checkEnter);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</script>
-
     </main>
-
     <footer>
-        &copy; 2024 ai.wank. Alle Rechte vorbehalten.
+        <p>&copy; 2024 AI.Wank. Alle Rechte vorbehalten.</p>
     </footer>
-    
+    <script src="script.js"></script>
 </body>
-
 </html>
